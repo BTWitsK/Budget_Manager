@@ -5,7 +5,7 @@ public class Main {
         Application app = new Application();
 
         do {
-            app.setMenu(app.printMenu());
+            app.setState(app.printMenu());
 
             switch (app.getState()) {
                 case INCOME -> app.addIncome();
