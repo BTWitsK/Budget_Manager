@@ -12,6 +12,7 @@ public class Main {
                 case PURCHASE -> app.addPurchase();
                 case LIST -> app.listPurchases();
                 case BALANCE -> app.printBalance();
+                case SAVE -> app.savePurchases();
                 case EXIT -> System.out.print("Bye!");
             }
         } while (app.getState() != Application.Menu.EXIT);

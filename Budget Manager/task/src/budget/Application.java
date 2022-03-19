@@ -1,5 +1,6 @@
 package budget;
 import java.util.*;
+import java.io.*;
 
 public class Application {
     enum Menu {
@@ -7,6 +8,8 @@ public class Application {
         PURCHASE(2),
         LIST(3),
         BALANCE(4),
+        SAVE(5),
+        LOAD(6),
         EXIT(0);
 
         final int userInput;
@@ -37,17 +40,21 @@ public class Application {
     }
 
     private static Scanner scanner;
+    private static PrintWriter writer;
+    private FileReader reader;
+    private File saveFile;
+    private Menu state;
+    private PurchaseMenu purchaseMenu;
     private ArrayList<Item> purchaseList;
     private double balance;
     private double purchaseTotal;
-    private Menu state;
-    private PurchaseMenu purchaseMenu;
 
     public Application() {
         scanner = new Scanner(System.in);
         this.purchaseList = new ArrayList<>();
         this.balance = 0.00;
         purchaseTotal = 0.00;
+        saveFile = new File("purchases.txt");
     }
 
     public void setState(int input) {
@@ -161,6 +168,18 @@ public class Application {
                 }
             }
         } while (purchaseMenu != PurchaseMenu.BACK);
+    }
+
+    public void savePurchases() {
+        try {
+            writer = new PrintWriter(saveFile);
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+
+        writer.println(balance + purchaseTotal);
+        purchaseList.forEach(item -> writer.printf("%s,%s,%s",
+                item.getItemName(), item.getItemCost(), item.getCategory().name()));
     }
 
     public void printPurchaseList(ArrayList<Item> list, double total) {

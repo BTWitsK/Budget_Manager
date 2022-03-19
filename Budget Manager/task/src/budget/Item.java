@@ -37,6 +37,10 @@ class Item {
         return null;
     }
 
+    public String getItemName() {
+        return this.itemName;
+    }
+
     public Category getCategory() {
         return category;
     }
