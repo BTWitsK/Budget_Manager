@@ -23,6 +23,12 @@ class Item {
         this.category = setCategory(category);
     }
 
+    public Item(String name, String cost, String category) {
+        this.itemName = name;
+        this.itemCost = Double.parseDouble(cost);
+        this.category = Category.valueOf(category);
+    }
+
     @Override
     public String toString() {
         return String.format("%s $%.2f", this.itemName, this.itemCost);

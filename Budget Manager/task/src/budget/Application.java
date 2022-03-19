@@ -11,9 +11,7 @@ public class Application {
         SAVE(5),
         LOAD(6),
         EXIT(0);
-
         final int userInput;
-
         Menu(int input) {
             this.userInput = input;
         }
@@ -26,9 +24,7 @@ public class Application {
         OTHER(4),
         ALL(5),
         BACK(6);
-
         final int input;
-
         PurchaseMenu(int choice) {
             this.input = choice;
         }
@@ -40,8 +36,8 @@ public class Application {
     }
 
     private static Scanner scanner;
-    private static PrintWriter writer;
-    private FileReader reader;
+    private PrintWriter writer;
+    private Scanner reader;
     private File saveFile;
     private Menu state;
     private PurchaseMenu purchaseMenu;
@@ -125,10 +121,8 @@ public class Application {
 
     public void addPurchase() {
         int category;
-
         do {
             category = printCategories();
-
             if (category != 5) {
                 System.out.println("Enter purchase name:");
                 String name = scanner.nextLine();
@@ -140,14 +134,12 @@ public class Application {
                 balance -= price;
                 System.out.println("Purchase was added!\n");
             }
-
         } while (category != 5);
     }
 
     public void listPurchases() {
         do {
             setPurchaseMenu(printPurchaseMenu());
-
             if (!purchaseMenu.toString().equals("Back")) {
                 System.out.printf("%s:\n", purchaseMenu.toString());
 
@@ -176,12 +168,26 @@ public class Application {
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
-
-        writer.println(balance + purchaseTotal);
-        purchaseList.forEach(item -> writer.printf("%s,%s,%s",
+        writer.println(balance);
+        writer.println(purchaseTotal);
+        purchaseList.forEach(item -> writer.printf("%s,%s,%s\n",
                 item.getItemName(), item.getItemCost(), item.getCategory().name()));
+        System.out.println("Purchases were saved!");
     }
 
+    public void loadPurchases() {
+        try {
+            reader = new Scanner(saveFile);
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }
+        this.balance = Double.parseDouble(reader.nextLine());
+        this.purchaseTotal = Double.parseDouble(reader.nextLine());
+        while (reader.hasNext()) {
+            String[] itemLine = reader.nextLine().split(",");
+            purchaseList.add(new Item(itemLine[0], itemLine[1], itemLine[2]));
+        }
+    }
     public void printPurchaseList(ArrayList<Item> list, double total) {
         list.forEach(System.out::println);
         System.out.printf("Total sum: $%.2f\n\n", total);
@@ -189,12 +195,10 @@ public class Application {
 
     public void printPurchaseList(ArrayList<Item> list) {
         double total = 0;
-
         for (Item item : list) {
             System.out.println(item);
             total += item.getItemCost();
         }
-
         System.out.printf("Total sum: $%.02f\n\n", total);
     }
 

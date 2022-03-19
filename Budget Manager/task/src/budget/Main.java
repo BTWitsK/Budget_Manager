@@ -13,6 +13,7 @@ public class Main {
                 case LIST -> app.listPurchases();
                 case BALANCE -> app.printBalance();
                 case SAVE -> app.savePurchases();
+                case LOAD -> app.loadPurchases();
                 case EXIT -> System.out.print("Bye!");
             }
         } while (app.getState() != Application.Menu.EXIT);
