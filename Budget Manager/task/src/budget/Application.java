@@ -36,9 +36,9 @@ public class Application {
     }
 
     private static Scanner scanner;
-    private PrintWriter writer;
     private Scanner reader;
-    private File saveFile;
+    private File saveFile = new File("purchases.txt");
+
     private Menu state;
     private PurchaseMenu purchaseMenu;
     private ArrayList<Item> purchaseList;
@@ -49,8 +49,7 @@ public class Application {
         scanner = new Scanner(System.in);
         this.purchaseList = new ArrayList<>();
         this.balance = 0.00;
-        purchaseTotal = 0.00;
-        saveFile = new File("purchases.txt");
+        this.purchaseTotal = 0.00;
     }
 
     public void setState(int input) {
@@ -72,6 +71,8 @@ public class Application {
                 2) Add purchase
                 3) Show list of purchases
                 4) Balance
+                5) Save
+                6) Load
                 0) Exit
                 """;
         System.out.println(output);
@@ -163,15 +164,14 @@ public class Application {
     }
 
     public void savePurchases() {
-        try {
-            writer = new PrintWriter(saveFile);
+        try (PrintWriter writer = new PrintWriter(saveFile)){
+            writer.printf("%s\n", balance);
+            writer.printf("%s\n", purchaseTotal);
+            purchaseList.forEach(item -> writer.printf("%s,%s,%s\n",
+                    item.getItemName(), item.getItemCost(), item.getCategory().name()));
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
-        writer.println(balance);
-        writer.println(purchaseTotal);
-        purchaseList.forEach(item -> writer.printf("%s,%s,%s\n",
-                item.getItemName(), item.getItemCost(), item.getCategory().name()));
         System.out.println("Purchases were saved!");
     }
 
@@ -187,7 +187,9 @@ public class Application {
             String[] itemLine = reader.nextLine().split(",");
             purchaseList.add(new Item(itemLine[0], itemLine[1], itemLine[2]));
         }
+        System.out.println("Purchases were loaded\n");
     }
+
     public void printPurchaseList(ArrayList<Item> list, double total) {
         list.forEach(System.out::println);
         System.out.printf("Total sum: $%.2f\n\n", total);
