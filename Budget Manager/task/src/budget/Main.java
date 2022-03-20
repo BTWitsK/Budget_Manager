@@ -14,6 +14,7 @@ public class Main {
                 case BALANCE -> app.printBalance();
                 case SAVE -> app.savePurchases();
                 case LOAD -> app.loadPurchases();
+                case SORT -> app.sortPurchases();
                 case EXIT -> System.out.print("Bye!");
             }
         } while (app.getState() != Application.Menu.EXIT);

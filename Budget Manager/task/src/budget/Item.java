@@ -12,6 +12,11 @@ class Item {
         Category(int choice) {
             this.input = choice;
         }
+
+        @Override
+        public String toString() {
+            return this.name().charAt(0) + this.name().substring(1).toLowerCase();
+        }
     }
     private final String itemName;
     private final double itemCost;
@@ -42,17 +47,13 @@ class Item {
         }
         return null;
     }
-
-    public String getItemName() {
-        return this.itemName;
-    }
-
     public Category getCategory() {
         return category;
     }
-
+    public String getItemName() {
+        return this.itemName;
+    }
     public double getItemCost() {
         return this.itemCost;
     }
-
 }

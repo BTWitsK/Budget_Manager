@@ -10,6 +10,7 @@ public class Application {
         BALANCE(4),
         SAVE(5),
         LOAD(6),
+        SORT(7),
         EXIT(0);
         final int userInput;
         Menu(int input) {
@@ -17,40 +18,10 @@ public class Application {
         }
     }
 
-    enum PurchaseMenu {
-        FOOD(1),
-        CLOTHES(2),
-        ENTERTAINMENT(3),
-        OTHER(4),
-        ALL(5),
-        BACK(6);
-        final int input;
-        PurchaseMenu(int choice) {
-            this.input = choice;
-        }
-
-        @Override
-        public String toString() {
-            return name().charAt(0) + name().substring(1).toLowerCase();
-        }
-    }
-
-    private static Scanner scanner;
-    private Scanner reader;
-    private File saveFile = new File("purchases.txt");
-
+    private static final Scanner scanner = new Scanner(System.in);
+    private final File saveFile = new File("purchases.txt");
     private Menu state;
-    private PurchaseMenu purchaseMenu;
-    private ArrayList<Item> purchaseList;
-    private double balance;
-    private double purchaseTotal;
-
-    public Application() {
-        scanner = new Scanner(System.in);
-        this.purchaseList = new ArrayList<>();
-        this.balance = 0.00;
-        this.purchaseTotal = 0.00;
-    }
+    private final PurchaseList purchaseList = new PurchaseList();
 
     public void setState(int input) {
         for (Menu choice : Menu.values()) {
@@ -73,29 +44,8 @@ public class Application {
                 4) Balance
                 5) Save
                 6) Load
+                7) Analyze (Sort)
                 0) Exit
-                """;
-        System.out.println(output);
-        return Integer.parseInt(scanner.nextLine());
-    }
-
-    public void setPurchaseMenu(int input) {
-        for (PurchaseMenu choice : PurchaseMenu.values()) {
-            if (choice.input == input) {
-                purchaseMenu = choice;
-            }
-        }
-    }
-
-    public int printPurchaseMenu() {
-        String output = """
-                Choose the type of purchases
-                1) Food
-                2) Clothes
-                3) Entertainment
-                4) Other
-                5) All
-                6) Back
                 """;
         System.out.println(output);
         return Integer.parseInt(scanner.nextLine());
@@ -114,9 +64,20 @@ public class Application {
         return Integer.parseInt(scanner.nextLine());
     }
 
+    public void printSortTypes() {
+        System.out.println("""
+                
+                How do you want to sort?
+                1) sort all purchases
+                2) Sort by type
+                3) Sort certain type
+                4) Back
+                """);
+    }
+
     public void addIncome() {
         System.out.println("Enter income:");
-        this.balance += Double.parseDouble(scanner.nextLine());
+        purchaseList.addIncome(Double.parseDouble(scanner.nextLine()));
         System.out.println("Income was added!\n");
     }
 
@@ -130,9 +91,7 @@ public class Application {
                 System.out.println("Enter its price:");
                 double price = Double.parseDouble(scanner.nextLine());
 
-                purchaseList.add(new Item(name, price, category));
-                purchaseTotal += price;
-                balance -= price;
+                purchaseList.addPurchase(new Item(name, price, category));
                 System.out.println("Purchase was added!\n");
             }
         } while (category != 5);
@@ -140,71 +99,57 @@ public class Application {
 
     public void listPurchases() {
         do {
-            setPurchaseMenu(printPurchaseMenu());
-            if (!purchaseMenu.toString().equals("Back")) {
-                System.out.printf("%s:\n", purchaseMenu.toString());
-
-                switch (purchaseMenu) {
-                    case FOOD, CLOTHES, ENTERTAINMENT, OTHER -> {
-                        ArrayList<Item> tempList = new ArrayList<>();
-                        purchaseList.forEach(item -> {
-                            if (item.getCategory().name().equals(purchaseMenu.name())) tempList.add(item);
-                        });
-
-                        if (tempList.isEmpty()) {
-                            System.out.println("The purchase list is empty!\n");
-                        } else {
-                            printPurchaseList(tempList);
-                        }
-                    }
-                    case ALL -> printPurchaseList(purchaseList, purchaseTotal);
-                }
+            purchaseList.printPurchaseMenu();
+            purchaseList.setPurchaseState(Integer.parseInt(scanner.nextLine()));
+            if (!purchaseList.getPurchaseState().equals("Back")) {
+                System.out.printf("%s:\n", purchaseList.getPurchaseState());
+                purchaseList.listPurchases();
             }
-        } while (purchaseMenu != PurchaseMenu.BACK);
+        } while (!purchaseList.getPurchaseState().equals("Back"));
     }
 
     public void savePurchases() {
-        try (PrintWriter writer = new PrintWriter(saveFile)){
-            writer.printf("%s\n", balance);
-            writer.printf("%s\n", purchaseTotal);
-            purchaseList.forEach(item -> writer.printf("%s,%s,%s\n",
-                    item.getItemName(), item.getItemCost(), item.getCategory().name()));
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
+        purchaseList.savePurchases(saveFile);
         System.out.println("Purchases were saved!");
     }
 
     public void loadPurchases() {
-        try {
-            reader = new Scanner(saveFile);
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
-        }
-        this.balance = Double.parseDouble(reader.nextLine());
-        this.purchaseTotal = Double.parseDouble(reader.nextLine());
-        while (reader.hasNext()) {
-            String[] itemLine = reader.nextLine().split(",");
-            purchaseList.add(new Item(itemLine[0], itemLine[1], itemLine[2]));
-        }
+        purchaseList.loadPurchases(saveFile);
         System.out.println("Purchases were loaded\n");
     }
 
-    public void printPurchaseList(ArrayList<Item> list, double total) {
-        list.forEach(System.out::println);
-        System.out.printf("Total sum: $%.2f\n\n", total);
+    public Sorter executeSort(Sorter sorter) {
+        sorter.sort(purchaseList);
+        printSortTypes();
+        return new Sorter(Integer.parseInt(scanner.nextLine()));
     }
 
-    public void printPurchaseList(ArrayList<Item> list) {
-        double total = 0;
-        for (Item item : list) {
-            System.out.println(item);
-            total += item.getItemCost();
-        }
-        System.out.printf("Total sum: $%.02f\n\n", total);
+    public void sortPurchases() {
+        printSortTypes();
+        Sorter sorter = new Sorter(Integer.parseInt(scanner.nextLine()));
+
+        do {
+            switch (sorter.getSortType()) {
+                case ALL -> {
+                    sorter.setSortingStrategy(new sortAll());
+                    sorter = executeSort(sorter);
+                }
+                case TYPE -> {
+                    sorter.setSortingStrategy(new sortByType());
+                    sorter = executeSort(sorter);
+                }
+                case CATEGORY -> {
+                    purchaseList.printSortCategoryMenu();
+                    purchaseList.setPurchaseState(Integer.parseInt(scanner.nextLine()));
+                    sorter.setSortingStrategy(new sortCertainType());
+                    sorter = executeSort(sorter);
+                }
+            }
+        } while (sorter.getSortType() != Sorter.Sort.BACK);
+
     }
 
     public void printBalance() {
-        System.out.printf("Balance: $%.02f\n\n", this.balance);
+        System.out.printf("Balance: $%.02f\n\n", purchaseList.getBalance());
     }
 }
